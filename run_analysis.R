@@ -58,23 +58,27 @@ subject_train <- fread('UCI HAR Dataset/train/subject_train.txt', header = FALSE
     setnames(c("subject"))
 print(tabinfo("subject_train", subject_train))
 # Set the column widths for the conversion of fixed width data to csv
-tab <- data.table(row=c(1:561)) %>% mutate(start = 1 + ((row - 1) * 16), end = (row) * 16, name = paste0("V",as.character(row)))
+tab <- data.table(row=c(1:561)) %>% 
+    mutate(start = 1 + ((row - 1) * 16), end = (row) * 16, name = paste0("V",as.character(row)))
 print('Converting test to csv')
 fwf2csv('UCI HAR Dataset/test/X_test.txt', 'X_test.csv', tab[,name], tab[,start], tab[,end])
 print('Converting train to csv')
 fwf2csv('UCI HAR Dataset/train/X_train.txt', 'X_train.csv',  tab[,name], tab[,start], tab[,end])
 print('Loading X_test')
 # Load the test data and add activity and subject information
-X_test <- data.table(fread('X_test.csv')) %>% mutate(activity_index = y_test[,index], subject = subject_test[,subject])
+X_test <- fread('X_test.csv') %>% 
+    mutate(activity_index = y_test[,index], subject = subject_test[,subject])
 print(tabinfo("X_test", X_test))
 print('Loading X_train')
 # Load the training  data and add activity and subject information
-X_train <- data.table(fread('X_train.csv')) %>% mutate(activity_index = y_train[,index], subject = subject_train[,subject])
+X_train <- fread('X_train.csv') %>% 
+    mutate(activity_index = y_train[,index], subject = subject_train[,subject])
 print(tabinfo("X_train", X_train))
 
 # Combine the datasets and add the descriptive activity and limits columns to the filtered features
 print('Combining and Limiting')
-X_mean_std <- rbindlist(list(X_train, X_test)) %>% mutate(activity = factor(activities[aindex == activity_index, aname])) %>%
+X_mean_std <- rbindlist(list(X_train, X_test)) %>% 
+    mutate(activity = factor(activities[aindex == activity_index, aname])) %>%
     select(activity, subject, num_range("V", as.vector(features_desc[,findex]))) %>%
     setnames(c("Activity", "Subject", features_desc[,fname]))
 print(tabinfo("X_mean_std", X_mean_std))

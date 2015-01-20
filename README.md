@@ -66,14 +66,15 @@ The input files initially seemed confusing until I realised the X_test.txt and X
 The load time using read.fwf slow taking minutes. The 2 large files are converted from fixed format to csv using fwf2csv resulting in a much decreased load time using fread over read.fwf
 ```r
 tab <- data.table(row=c(1:561)) %>% mutate(start = 1 + ((row - 1) * 16), end = (row) * 16, name = paste0("V",as.character(row)))
+
 fwf2csv('UCI HAR Dataset/test/X_test.txt', 'X_test.csv', tab[,name], tab[,start], tab[,end])
 fwf2csv('UCI HAR Dataset/train/X_train.txt', 'X_train.csv',  tab[,name], tab[,start], tab[,end])
 ```
 X_test and X_train is loaded and activity-index and subject added.
 ```r
-X_test <- data.table(fread('X_test.csv')) %>% 
+X_test <- fread('X_test.csv') %>% 
     mutate(activity_index = y_test[,index], subject = subject_test[,subject])
-X_train <- data.table(fread('X_train.csv')) %>% 
+X_train <- fread('X_train.csv') %>% 
     mutate(activity_index = y_train[,index], subject = subject_train[,subject])
 ```
 
