@@ -11,7 +11,6 @@ File | Description
 -----|------------
 [run_analysis.R](run_analysis.R) | The R script that performs the analysis
 [CodeBook.md](CodeBook.md) | The code book describing the tidy dataset.
-[tidy-dataset.txt](tidy-dataset.txt) | The tidy dataset txt file
 
 ### Packages
 The analytis script uses the following packages from CRAN data.table, dplyr, tidyr and descr.
@@ -27,7 +26,10 @@ The features are filtered retaining only features with mean()- or std()- in fnam
 This results in a set of 48 features.  
 The name are then expanded to more descriptive names similar to the activity names.
 ```r
-features <- data.table(read.csv('UCI HAR Dataset/features.txt', header = FALSE, col.names = c("findex", "fname"), sep = " "))
+features <- fread('UCI HAR Dataset/features.txt', header = FALSE) %>% 
+    setnames(c("findex", "fname")) %>%
+    setkey('findex')
+
 features_desc <- features %>% 
     filter(grepl("mean\\(\\)\\-", fname) | grepl("std\\(\\)\\-", fname))  %>% 
     mutate(fname = sub("mean\\(\\)\\-", "MEAN_", fname)) %>%
@@ -45,13 +47,20 @@ y_test.txt and y_train.txt has 1 column named index.
 subject_test.txt and subject_train.txt has 1 solumn named subject.
 
 ```r
-activities <- data.table(read.csv('UCI HAR Dataset/activity_labels.txt', header=FALSE, col.names = c("aindex", "aname"), sep = " ")) %>% setkey('aindex')
-y_test <- data.table(read.csv('UCI HAR Dataset/test/y_test.txt', header = FALSE, col.names = c("index"), sep = " ")) %>% setkey('index')
-y_train <- data.table(read.csv('UCI HAR Dataset/train/y_train.txt', header = FALSE, col.names = c("index"), sep = " ")) %>% setkey('index')
-subject_test <- data.table(read.csv('UCI HAR Dataset/test/subject_test.txt', header = FALSE, col.names = c("subject"), sep = " "))
-subject_train <- data.table(read.csv('UCI HAR Dataset/train/subject_train.txt', header = FALSE, col.names = c("subject"), sep = " "))
+activities <- fread('UCI HAR Dataset/activity_labels.txt', header=FALSE) %>% 
+    setnames(c("aindex", "aname")) %>% 
+    setkey('aindex')
+y_test <- fread('UCI HAR Dataset/test/y_test.txt', header = FALSE) %>% 
+    setnames(c("index")) %>% 
+    setkey('index')
+y_train <- fread('UCI HAR Dataset/train/y_train.txt', header = FALSE) %>% 
+    setnames(c("index")) %>%
+    setkey('index')
+subject_test <- fread('UCI HAR Dataset/test/subject_test.txt', header = FALSE) %>%
+    setnames(c("subject"))
+subject_train <- fread('UCI HAR Dataset/train/subject_train.txt', header = FALSE) %>%
+    setnames(c("subject")
 ```
-For each dataset the data.frame is converted to data.table after loading.
 
 The input files initially seemed confusing until I realised the X_test.txt and X_train.txt was fixed column files with a variable every 16 characters.
 The load time using read.fwf slow taking minutes. The 2 large files are converted from fixed format to csv using fwf2csv resulting in a much decreased load time using fread over read.fwf
@@ -62,13 +71,16 @@ fwf2csv('UCI HAR Dataset/train/X_train.txt', 'X_train.csv',  tab[,name], tab[,st
 ```
 X_test and X_train is loaded and activity-index and subject added.
 ```r
-X_test <- data.table(fread('X_test.csv')) %>% mutate(activity_index = y_test[,index], subject = subject_test[,subject])
-X_train <- data.table(fread('X_train.csv')) %>% mutate(activity_index = y_train[,index], subject = subject_train[,subject])
+X_test <- data.table(fread('X_test.csv')) %>% 
+    mutate(activity_index = y_test[,index], subject = subject_test[,subject])
+X_train <- data.table(fread('X_train.csv')) %>% 
+    mutate(activity_index = y_train[,index], subject = subject_train[,subject])
 ```
 
 The test and train datasets are combined, the descriptive activity assigned and the filtered features selected and column names assigned
 ```r
-X_mean_std <- rbindlist(list(X_train, X_test)) %>% mutate(activity = factor(activities[aindex == activity_index, aname])) %>%
+X_mean_std <- rbindlist(list(X_train, X_test)) %>% 
+    mutate(activity = factor(activities[aindex == activity_index, aname])) %>%
     select(activity, subject, num_range("V", as.vector(features_desc[,findex]))) %>%
     setnames(c("Activity", "Subject", as.character(features_desc[,fname])))
 ```

@@ -20,7 +20,9 @@ if(!require(descr)) {
 }
 st <- proc.time()
 # Load the features 
-features <- data.table(read.csv('UCI HAR Dataset/features.txt', header = FALSE, col.names = c("findex", "fname"), sep = " "))
+features <- fread('UCI HAR Dataset/features.txt', header = FALSE) %>% 
+    setnames(c("findex", "fname")) %>%
+    setkey('findex')
 # Filter only features that contain mean()- or std()- and expand the features to descriptive names
 features_desc <- features %>% 
     filter(grepl("mean\\(\\)\\-", fname) | grepl("std\\(\\)\\-", fname))  %>% 
@@ -35,17 +37,25 @@ features_desc <- features %>%
     mutate(fname = sub("Gyro\\-", "GYROSCOPE_", fname))
 print(tabinfo("features_desc", features_desc))
 # Load the descriptive activities
-activities <- data.table(read.csv('UCI HAR Dataset/activity_labels.txt', header=FALSE, col.names = c("aindex", "aname"), sep = " ")) %>% setkey('aindex')
+activities <- fread('UCI HAR Dataset/activity_labels.txt', header=FALSE) %>% 
+    setnames(c("aindex", "aname")) %>% 
+    setkey('aindex')
 # Load the activities for the test and training data
-y_test <- data.table(read.csv('UCI HAR Dataset/test/y_test.txt', header = FALSE, col.names = c("index"), sep = " ")) %>% setkey('index')
+y_test <- fread('UCI HAR Dataset/test/y_test.txt', header = FALSE) %>% 
+    setnames(c("index")) %>% 
+    setkey('index')
 print(tabinfo("y_test", y_test))
-y_train <- data.table(read.csv('UCI HAR Dataset/train/y_train.txt', header = FALSE, col.names = c("index"), sep = " ")) %>% setkey('index')
+y_train <- fread('UCI HAR Dataset/train/y_train.txt', header = FALSE) %>% 
+    setnames(c("index")) %>%
+    setkey('index')
 print(tabinfo("y_train", y_train))
 
 # Load the subjects for the test and training data
-subject_test <- data.table(read.csv('UCI HAR Dataset/test/subject_test.txt', header = FALSE, col.names = c("subject"), sep = " "))
+subject_test <- fread('UCI HAR Dataset/test/subject_test.txt', header = FALSE) %>%
+    setnames(c("subject"))
 print(tabinfo("subject_test", subject_test))
-subject_train <- data.table(read.csv('UCI HAR Dataset/train/subject_train.txt', header = FALSE, col.names = c("subject"), sep = " "))
+subject_train <- fread('UCI HAR Dataset/train/subject_train.txt', header = FALSE) %>%
+    setnames(c("subject"))
 print(tabinfo("subject_train", subject_train))
 # Set the column widths for the conversion of fixed width data to csv
 tab <- data.table(row=c(1:561)) %>% mutate(start = 1 + ((row - 1) * 16), end = (row) * 16, name = paste0("V",as.character(row)))
@@ -66,7 +76,7 @@ print(tabinfo("X_train", X_train))
 print('Combining and Limiting')
 X_mean_std <- rbindlist(list(X_train, X_test)) %>% mutate(activity = factor(activities[aindex == activity_index, aname])) %>%
     select(activity, subject, num_range("V", as.vector(features_desc[,findex]))) %>%
-    setnames(c("Activity", "Subject", as.character(features_desc[,fname])))
+    setnames(c("Activity", "Subject", features_desc[,fname]))
 print(tabinfo("X_mean_std", X_mean_std))
 print('Gather into rows')
 # Gather the data so that variable end in one column and assign proper column names
