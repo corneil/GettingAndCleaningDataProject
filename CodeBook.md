@@ -6,24 +6,29 @@ CodeBook
 **2015-01-15**
 
 ## Initial dataset.
+
 ### features.txt
+
 Name | Type | Description
 -----|------|------------
 findex | int | Index for each feature.
 fname | character | Label of the feature. 
 
 ### activity_labels.txt
+
 Name | Type | Description
 -----|------|------------
 aindex | int | Index for each activity.
 aname | character | Label for the activity. 
 
 ### y_test.txt and y_train.txt
+
 Name | Type | Description
 -----|------|------------
 index | int | Index of activity for the corresponding row in X_ set
 
 ### subject_test.txt and subject_train.txt
+
 Name | Type | Description
 -----|------|------------
 index | int | Index of subject for the corresponding row in X_ set
